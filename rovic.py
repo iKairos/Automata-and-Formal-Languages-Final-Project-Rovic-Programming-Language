@@ -55,6 +55,10 @@ def lexer(code: str):
 
     enclosure = 0
 
+    condition = 0
+
+    loop = 0
+
     for c in code:
         tk += c 
         
@@ -66,9 +70,14 @@ def lexer(code: str):
         elif tk == "\n":
             tk = ""
         elif tk in keywords:
+            if tk == "if":
+                condition = 1
+
             token += keywords[tk]
+
             tk = ""
         elif variable_state == 1:
+            
             if tk == "\"":
                 if state == 0:
                     token += "OP_QUOT "
@@ -89,8 +98,13 @@ def lexer(code: str):
                 expression = 1
                 numeral += tk
                 tk = ""
+            elif tk == "input":
+                token += f"INPUT_KW:{variable} "
+                tk = ""
+                variable_state = 0 
+                variable = ""
             elif tk == ";":
-                if expression:
+                if expression == 1:
                     token += "EXPR "
                     variables[variable] = (numeral, "EXPR")
                     numeral = ""
@@ -119,7 +133,7 @@ def lexer(code: str):
                 tk = ""
             else:
                 boolean += c 
-                tk = ""
+                
 
         elif tk == '(':
             token += "LPAREN "
