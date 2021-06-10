@@ -16,6 +16,8 @@ if in keyword
 colon
 pinalitan ko code nung sa variable mo. ginawa kong "string" in tk para madetect niya yung =
 for and while loop sa keywords
+
+data types: [int, float, string, bool]
 """
 
 def lexer(code: str):
@@ -26,6 +28,7 @@ def lexer(code: str):
     tk = ""
 
     state = 0
+    variable_state = 0
 
     keywords = {
         'print': 'PRINT_KW ',
@@ -39,9 +42,13 @@ def lexer(code: str):
 
     }
 
+
+    numeral = ""
+    numerals = ['0','1','2','3','4','5','6','7','8','9', '.']
+
     for c in code:
         tk += c 
-        print(tk)
+        
         if tk == " ":
             if state == 0:
                 tk = ""
@@ -52,6 +59,27 @@ def lexer(code: str):
         elif tk in keywords:
             token += keywords[tk]
             tk = ""
+        elif variable_state == 1:
+            if tk == "\"":
+                if state == 0:
+                    token += "OP_QUOT "
+                    state = 1
+                elif state == 1:
+                    token += f"STRING "
+                    token += "CL_QUOT "
+                    variables[variable] = (string, "STRING")
+                    variable = ""
+                    state = 0
+                    tk = ""
+                    string = ""
+                    variable_state = 0
+            elif tk in numerals:
+                numeral += tk 
+                tk = ""
+            else:
+                string += c 
+                tk = ""
+
         elif tk == '(':
             token += "LPAREN "
             tk = ""
@@ -73,8 +101,13 @@ def lexer(code: str):
             string += c 
             tk = ""
         elif "=" in tk:
-            token += f"VARIABLE: {tk[:-1]}EQUALS "
-            variables[tk] = ""
+            variable = tk.replace("=", "")
+            variable = variable.strip()
+
+            token += f"VARIABLE:{variable} EQUALS "
+
+            variables[variable] = ""
+            variable_state = 1 # is variable
             tk = ""
         elif tk == ":":
             token += "COLON"
@@ -89,6 +122,7 @@ def lexer(code: str):
             tk = ""
             state = 0
     
+    print(variables)
     return tokens
 
 if __name__ == "__main__":
