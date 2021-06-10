@@ -15,6 +15,7 @@ def open_code(directory: str):
 if in keyword
 colon
 pinalitan ko code nung sa variable mo. ginawa kong "string" in tk para madetect niya yung =
+for and while loop sa keywords
 """
 
 def lexer(code: str):
@@ -29,6 +30,8 @@ def lexer(code: str):
     keywords = {
         'print': 'PRINT_KW ',
         'if': 'CONDITION ',
+        'for': 'FOR_LOOP',
+        'while': 'WHILE_LOOP',
     }
 
     variable = ""
@@ -70,7 +73,7 @@ def lexer(code: str):
             string += c 
             tk = ""
         elif "=" in tk:
-            token += f"VARIABLE: {tk} "
+            token += f"VARIABLE: {tk[:-1]}EQUALS "
             variables[tk] = ""
             tk = ""
         elif tk == ":":
