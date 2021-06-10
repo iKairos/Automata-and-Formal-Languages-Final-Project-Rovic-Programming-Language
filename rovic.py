@@ -11,6 +11,12 @@ def open_code(directory: str):
 
     return file_contents
 
+"""
+if in keyword
+colon
+pinalitan ko code nung sa variable mo. ginawa kong "string" in tk para madetect niya yung =
+"""
+
 def lexer(code: str):
     tokens = []
     token = ""
@@ -21,7 +27,8 @@ def lexer(code: str):
     state = 0
 
     keywords = {
-        'print': 'PRINT_KW '
+        'print': 'PRINT_KW ',
+        'if': 'CONDITION ',
     }
 
     variable = ""
@@ -62,10 +69,16 @@ def lexer(code: str):
         elif state == 1:
             string += c 
             tk = ""
-        elif tk == "=":
-            token += f"VARIABLE: {tk}"
+        elif "=" in tk:
+            token += f"VARIABLE: {tk} "
             variables[tk] = ""
             tk = ""
+        elif tk == ":":
+            token += "COLON"
+            tokens.append(token)
+            token = ""
+            tk = ""
+            state = 0
         elif tk == ";":
             token += "SEMICOLON"
             tokens.append(token)
