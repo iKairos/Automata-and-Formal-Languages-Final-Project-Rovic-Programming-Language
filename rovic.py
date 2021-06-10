@@ -20,6 +20,21 @@ for and while loop sa keywords
 data types: [int, float, string, bool]
 """
 
+variables = {
+
+}
+
+keywords = {
+    'print': 'PRINT_KW ',
+    'if': 'CONDITION ',
+    'for': 'FOR_LOOP',
+    'while': 'WHILE_LOOP',
+}
+
+numerals = ['0','1','2','3','4','5','6','7','8','9', '.']
+
+math_symbols = ['+','-','/','*','%']
+
 def lexer(code: str):
     tokens = []
     token = ""
@@ -30,21 +45,15 @@ def lexer(code: str):
     state = 0
     variable_state = 0
 
-    keywords = {
-        'print': 'PRINT_KW ',
-        'if': 'CONDITION ',
-        'for': 'FOR_LOOP',
-        'while': 'WHILE_LOOP',
-    }
-
     variable = ""
-    variables = {
-
-    }
-
 
     numeral = ""
-    numerals = ['0','1','2','3','4','5','6','7','8','9', '.']
+
+    boolean = ""
+
+    expression = 0
+
+    enclosure = 0
 
     for c in code:
         tk += c 
@@ -65,7 +74,7 @@ def lexer(code: str):
                     token += "OP_QUOT "
                     state = 1
                 elif state == 1:
-                    token += f"STRING "
+                    token += "STRING "
                     token += "CL_QUOT "
                     variables[variable] = (string, "STRING")
                     variable = ""
@@ -76,15 +85,63 @@ def lexer(code: str):
             elif tk in numerals:
                 numeral += tk 
                 tk = ""
-            else:
+            elif tk in math_symbols:
+                expression = 1
+                numeral += tk
+                tk = ""
+            elif tk == ";":
+                if expression:
+                    token += "EXPR "
+                    variables[variable] = (numeral, "EXPR")
+                    numeral = ""
+                elif expression == 0 and boolean == "":
+                    variables[variable] = (numeral, "INT" if "." not in numeral else "FLOAT")
+
+                    token += "INT " if "." not in numeral else "FLOAT "
+                    
+                    numeral = ""
+                elif boolean != "":
+                    variables[variable] = (boolean, "BOOLEAN")
+
+                    token += "BOOLEAN "
+
+                    boolean = ""
+
+                tk = ""
+                numeral = ""
+                variable_state = 0
+                expression = 0
+                token += "SEMICOLON"
+                tokens.append(token)
+                token = ""
+            elif state == 1:
                 string += c 
+                tk = ""
+            else:
+                boolean += c 
                 tk = ""
 
         elif tk == '(':
             token += "LPAREN "
             tk = ""
+            enclosure = 1
         elif tk == ")":
+            if enclosure == 1:
+                if expression == 1 and variable == "":
+                    token += f"EXPR:{numeral} "
+
+                    numeral = ""
+                elif expression == 0 and variable == "":
+                    token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
+                    
+                    numeral = ""
+                else:
+                    token += f"VARIABLE:{variable} "
+                    variable = ""
+
+
             token += "RPAREN "
+            enclosure = 0
             tk = ""
         elif tk == "\"":
             if state == 0:
@@ -93,13 +150,25 @@ def lexer(code: str):
             elif state == 1:
                 token += f"STRING:\"{string}\" "
                 token += "CL_QUOT "
-
+                
+                enclosure = 0
                 string = ""
                 state = 0 
                 tk = ""
         elif state == 1:
             string += c 
             tk = ""
+        elif enclosure == 1:
+            if tk in numerals:
+                numeral += tk 
+                tk = ""
+            elif tk in math_symbols:
+                expression = 1
+                numeral += tk
+                tk = ""
+            else:
+                variable += tk 
+                tk = ""
         elif "=" in tk:
             variable = tk.replace("=", "")
             variable = variable.strip()
