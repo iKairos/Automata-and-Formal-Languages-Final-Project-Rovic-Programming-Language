@@ -35,6 +35,8 @@ numerals = ['0','1','2','3','4','5','6','7','8','9', '.']
 
 math_symbols = ['+','-','/','*','%']
 
+operators = ['==', '!=', '>', '<', '>=','<=']
+
 def lexer(code: str):
     tokens = []
     token = ""
@@ -51,11 +53,15 @@ def lexer(code: str):
 
     boolean = ""
 
+    operator = ""
+
     expression = 0
 
     enclosure = 0
 
     condition = 0
+
+    operation = 0
 
     loop = 0
 
@@ -149,6 +155,14 @@ def lexer(code: str):
                     token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
                     
                     numeral = ""
+                elif operation >= 1:                    
+                    token += f"VARIABLE:{variable} OPERATOR:{operator[1:]} INT:{numeral} " if string == "" else f"STRING:{string}"
+                    variable = ""
+                    operator = ""
+                    numeral = ""
+                    string = ""
+                    tk = ""
+                    operation = 0
                 else:
                     token += f"VARIABLE:{variable} "
                     variable = ""
@@ -157,7 +171,7 @@ def lexer(code: str):
             token += "RPAREN "
             enclosure = 0
             tk = ""
-        elif tk == "\"":
+        elif tk == "\"" and condition == 0:
             if state == 0:
                 token += "OP_QUOT "
                 state = 1
@@ -180,6 +194,11 @@ def lexer(code: str):
                 expression = 1
                 numeral += tk
                 tk = ""
+            elif tk in operators:
+                operation += 1
+                operator += tk
+                if operation > 1:
+                    tk = ""
             else:
                 variable += tk 
                 tk = ""
