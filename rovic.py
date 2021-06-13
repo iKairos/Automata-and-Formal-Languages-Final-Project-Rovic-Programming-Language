@@ -11,201 +11,285 @@ def open_code(directory: str):
 
     return file_contents
 
-"""
-if in keyword
-colon
-pinalitan ko code nung sa variable mo. ginawa kong "string" in tk para madetect niya yung =
-for and while loop sa keywords
-
-data types: [int, float, string, bool]
-"""
-
+boole = {
+    'True': 'BOOL_TRUE',
+    'False': 'BOOL_FALSE',
+}
+keywords = {
+    'print': 'PRINT_KW ',
+    'if': 'CONDITION_IF ',
+    'elsif': 'CONDITION_ELSIF ',
+    'else': 'CONDITION_ELSE ',
+    'for': 'FOR_LOOP ',
+    'while': 'WHILE_LOOP '
+}
+math_symbols = ['+', '-', '*', '/', '%']
+numerals = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
+operators = ['=', '!', '<', '>']
 variables = {
 
 }
 
-keywords = {
-    'print': 'PRINT_KW ',
-    'if': 'CONDITION ',
-    'for': 'FOR_LOOP',
-    'while': 'WHILE_LOOP',
-}
-
-numerals = ['0','1','2','3','4','5','6','7','8','9', '.']
-
-math_symbols = ['+','-','/','*','%']
-
-operators = ['==', '!=', '>', '<', '>=','<=']
-
 def lexer(code: str):
+    
     tokens = []
     token = ""
-
-    string = ""
     tk = ""
 
-    state = 0
-    variable_state = 0
-
+    numeral = ""
+    operator = ""
+    string = ""
     variable = ""
 
-    numeral = ""
-
-    boolean = ""
-
-    expression = 0
-
-    enclosure = 0
-
     condition = 0
-
-    loop = 0
+    enclosure = 0
+    expression = 0
+    fill_paren = 0
+    ifBool = 0
+    operation = 0
+    state = 0
+    var_state = 0
 
     for c in code:
-        tk += c 
-        
+        tk += c                
+
+        # WHITE SPACE
         if tk == " ":
             if state == 0:
                 tk = ""
-            else:
+
+            elif state == 1:
                 string += " "
+
+        # NEXT LINE
         elif tk == "\n":
             tk = ""
-        elif tk in keywords:
+
+        # KEYWORDS
+        elif tk in keywords:     
             if tk == "if":
                 condition = 1
-
             token += keywords[tk]
 
             tk = ""
-        elif variable_state == 1:
+
+        # VARIABLE INSTANTIATION
+        elif "=" in tk and enclosure == 0:                        
+            variable = tk.replace("=", "").strip()            
             
+            var_state = 1
+            variables[variable] = ""
+            token += f"VARIABLE:{variable} EQUALS "
+            
+            tk = ""
+
+        # VARIABLE VALUE
+        elif var_state == 1:                
             if tk == "\"":
                 if state == 0:
-                    token += "OP_QUOT "
                     state = 1
+                    token += "OP_QUOT "
+                
                 elif state == 1:
-                    token += "STRING "
-                    token += "CL_QUOT "
                     variables[variable] = (string, "STRING")
-                    variable = ""
-                    state = 0
-                    tk = ""
+                    token += "STRING CL_QUOT "
+
                     string = ""
-                    variable_state = 0
+                    tk = ""
+                    variable = ""
+
+                    state = 0
+                    var_state = 0
+            
             elif tk in numerals:
-                numeral += tk 
+                numeral += tk
+
                 tk = ""
+
             elif tk in math_symbols:
                 expression = 1
                 numeral += tk
+
+                tk =""
+
+            elif state == 1:
+                string += c
+
                 tk = ""
+
+            elif tk in boole:
+                variables[variable] = (tk, "BOOLEAN")
+                token += boole[tk] + " "
+                ifBool = 1         
+
+                tk = "" 
+                variable = ""    
+                var_state = 0 
+
             elif tk == "input":
-                token += f"INPUT_KW:{variable} "
+                token += f"INPUT_KW "
+
                 tk = ""
-                variable_state = 0 
                 variable = ""
+                var_state = 0
+
             elif tk == ";":
                 if expression == 1:
-                    token += "EXPR "
                     variables[variable] = (numeral, "EXPR")
+                    token += "EXPR "
+
                     numeral = ""
-                elif expression == 0 and boolean == "":
+                    expression = 0
+                
+                elif expression == 0 and ifBool == 0:
                     variables[variable] = (numeral, "INT" if "." not in numeral else "FLOAT")
-
                     token += "INT " if "." not in numeral else "FLOAT "
-                    
+
                     numeral = ""
-                elif boolean != "":
-                    variables[variable] = (boolean, "BOOLEAN")
 
-                    token += "BOOLEAN "
-
-                    boolean = ""
-
-                tk = ""
-                numeral = ""
-                variable_state = 0
-                expression = 0
                 token += "SEMICOLON"
                 tokens.append(token)
-                token = ""
-            elif state == 1:
-                string += c 
-                tk = ""
-            else:
-                boolean += c 
-                
 
-        elif tk == '(':
+                tk = ""
+                token = ""
+                variable = ""
+                ifBool = 0
+                var_state = 0
+                
+        # LEFT PARENTHESIS
+        elif tk == "(":
             token += "LPAREN "
-            tk = ""
             enclosure = 1
-        elif tk == ")":
-            if enclosure == 1:
-                if expression == 1 and variable == "":
+
+            tk = ""
+
+        # RIGHT PARENTHESIS
+        elif tk == ")":                                  
+            if fill_paren == 1:     
+                if operation == 1:
+                    token += f"VARIABLE:{variable} OPERATOR:{operator} "
+                    
+                    if numeral != "":
+                        token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
+
+                        numeral = ""
+                    
+                    elif string != "":
+                        token += f"OP_QUOT STRING:\"{string}\" CL_QUOT "
+
+                        string = ""
+                    
+                    variable = ""
+                    operator = ""
+                    condition = 0
+                    operation = 0   
+
+                elif expression == 1:                
                     token += f"EXPR:{numeral} "
 
                     numeral = ""
-                elif expression == 0 and variable == "":
+                    expression = 0
+                
+                elif expression == 0 and numeral != "":                
                     token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
-                    
-                    numeral = ""                
-                else:
-                    token += f"VARIABLE:{variable} "
-                    variable = ""
 
+                    numeral = ""
+
+                elif variable != "":
+                    token += f"VARIABLE:{variable} "
+
+                    variable = ""
 
             token += "RPAREN "
             enclosure = 0
-            tk = ""
-        elif tk == "\"":
-            if state == 0:
-                token += "OP_QUOT "
-                state = 1
+            fill_paren = 0
+
+            tk = ""        
+
+        # ENCLOSURE
+        elif enclosure == 1:            
+            # QUOTATION MARK
+            if tk == "\"" and condition == 0:
+                fill_paren = 1
+                if state == 0:
+                    state = 1
+                    token += "OP_QUOT "
+
+                    tk = ""
+
+                elif state == 1:
+                    token += f"STRING:\"{string}\" CL_QUOT "
+
+                    string = ""
+                    tk = ""
+                    state = 0
+
+            # QUOTATION MARK IN CONDITION
+            elif tk == "\"" and condition == 1:
+                fill_paren = 1
+                if state == 0:
+                    state = 1                    
+
+                    tk = ""
+
+                elif state == 1:                   
+                    tk = ""
+                    state = 0
+            
+            # STRING READER
             elif state == 1:
-                token += f"STRING:\"{string}\" "
-                token += "CL_QUOT "
-                
-                enclosure = 0
-                string = ""
-                state = 0 
+                string += c
+
                 tk = ""
-        elif state == 1:
-            string += c 
-            tk = ""
-        elif enclosure == 1:
-            if tk in numerals:
-                numeral += tk 
+
+            # INTEGER
+            elif tk in numerals:
+                fill_paren = 1
+                numeral += tk
+
                 tk = ""
+
+            # EXPRESSION
             elif tk in math_symbols:
                 expression = 1
                 numeral += tk
-                tk = ""
-            else:
-                variable += tk 
-                tk = ""
-        elif "=" in tk:
-            variable = tk.replace("=", "")
-            variable = variable.strip()
 
-            token += f"VARIABLE:{variable} EQUALS "
+                tk = ""
 
-            variables[variable] = ""
-            variable_state = 1 # is variable
-            tk = ""
+            # OPERATORS
+            elif tk in operators:                
+                fill_paren = 1
+                operation = 1
+                operator += tk
+
+                tk = ""
+                
+            # VARIABLE READER
+            else:                      
+                fill_paren = 1
+                variable += tk
+
+                tk = ""
+
+
+        # COLON
         elif tk == ":":
             token += "COLON"
             tokens.append(token)
-            token = ""
+
             tk = ""
-            state = 0
+            token = ""
+
+        # SEMICOLON
         elif tk == ";":
             token += "SEMICOLON"
             tokens.append(token)
-            token = ""
+
             tk = ""
-            state = 0
+            token = ""
+
+        
+
     
     print(variables)
     return tokens
