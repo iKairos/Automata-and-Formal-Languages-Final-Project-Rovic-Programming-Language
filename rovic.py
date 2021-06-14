@@ -36,6 +36,7 @@ def lexer(code: str):
     token = ""
     tk = ""
 
+    loop_operator = ""
     numeral = ""
     operator = ""
     string = ""
@@ -46,6 +47,7 @@ def lexer(code: str):
     expression = 0
     fill_paren = 0
     ifBool = 0
+    loop = 0
     operation = 0
     state = 0
     var_state = 0
@@ -184,6 +186,14 @@ def lexer(code: str):
                     condition = 0
                     operation = 0   
 
+                elif loop == 1:
+                    token += f"VARIABLE:{variable} OPERATOR:{loop_operator} INT:{numeral} "
+
+                    loop_operator = ""
+                    numeral = ""
+                    variable = ""
+                    loop = 0
+
                 elif expression == 1:                
                     token += f"EXPR:{numeral} "
 
@@ -257,7 +267,7 @@ def lexer(code: str):
                 tk = ""
 
             # OPERATORS
-            elif tk in operators:                
+            elif tk in operators:                          
                 fill_paren = 1
                 operation = 1
                 operator += tk
@@ -265,12 +275,23 @@ def lexer(code: str):
                 tk = ""
                 
             # VARIABLE READER
-            else:                      
-                fill_paren = 1
+            else:      
+                print("test")                
+                fill_paren = 1                
                 variable += tk
 
-                tk = ""
+                if tk == "i":
+                    loop_operator += tk
 
+                elif tk == "n":
+                    loop_operator += tk
+
+                if loop_operator == "in":
+                    print(loop_operator)
+                    loop = 1
+                    variable = variable.replace("in", "")
+
+                tk = ""
 
         # COLON
         elif tk == ":":
@@ -288,9 +309,6 @@ def lexer(code: str):
             tk = ""
             token = ""
 
-        
-
-    
     print(variables)
     return tokens
 
