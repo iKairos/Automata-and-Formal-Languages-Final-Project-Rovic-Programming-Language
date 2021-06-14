@@ -1,4 +1,4 @@
-from sys import argv
+from sys import argv, path_importer_cache
 
 def open_code(directory: str):
     try:
@@ -15,6 +15,9 @@ boole = {
     'True': 'BOOL_TRUE',
     'False': 'BOOL_FALSE',
 }
+condition = [
+    
+]
 keywords = {
     'print': 'PRINT_KW ',
     'if': 'CONDITION_IF ',
@@ -23,6 +26,9 @@ keywords = {
     'for': 'FOR_LOOP ',
     'while': 'WHILE_LOOP '
 }
+loop = [
+
+]
 math_symbols = ['+', '-', '*', '/', '%']
 numerals = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
 operators = ['=', '!', '<', '>']
@@ -36,6 +42,7 @@ def lexer(code: str):
     token = ""
     tk = ""
 
+    boolean = ""
     loop_operator = ""
     numeral = ""
     operator = ""
@@ -167,7 +174,7 @@ def lexer(code: str):
 
         # RIGHT PARENTHESIS
         elif tk == ")":                                  
-            if fill_paren == 1:     
+            if fill_paren == 1:                                  
                 if operation == 1:
                     token += f"VARIABLE:{variable} OPERATOR:{operator} "
                     
@@ -179,12 +186,21 @@ def lexer(code: str):
                     elif string != "":
                         token += f"OP_QUOT STRING:\"{string}\" CL_QUOT "
 
-                        string = ""
+                        string = ""      
+
+                    elif ifBool == 1:                                          
+                        token += f"BOOL:{boolean} "           
                     
                     variable = ""
                     operator = ""
                     condition = 0
                     operation = 0   
+
+                elif ifBool == 1:                                           
+                        token += f"BOOL:{boolean} " 
+
+                        boolean = ""
+                        ifBool = 0
 
                 elif loop == 1:
                     token += f"VARIABLE:{variable} OPERATOR:{loop_operator} INT:{numeral} "
@@ -275,22 +291,30 @@ def lexer(code: str):
                 tk = ""
                 
             # VARIABLE READER
-            else:      
-                print("test")                
+            else:                                    
                 fill_paren = 1                
                 variable += tk
 
                 if tk == "i":
                     loop_operator += tk
 
-                elif tk == "n":
+                elif loop_operator == "i":
                     loop_operator += tk
 
-                if loop_operator == "in":
-                    print(loop_operator)
+                if loop_operator == "in":                    
                     loop = 1
                     variable = variable.replace("in", "")
 
+                if "True" in variable:                      
+                    ifBool = 1
+                    boolean = boole[variable.replace("var", "")]
+                    variable = variable.replace("True", "")                                   
+                                    
+                elif "False" in variable:
+                    ifBool = 1
+                    boolean = boole[variable.replace("var", "")]
+                    variable = variable.replace("False", "")
+                
                 tk = ""
 
         # COLON

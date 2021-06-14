@@ -1,1 +1,2 @@
-while(rovrov >= 0.5):
+print(True);
+if(var == True):
