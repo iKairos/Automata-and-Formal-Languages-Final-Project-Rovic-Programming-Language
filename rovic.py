@@ -333,9 +333,42 @@ def lexer(code: str):
             tk = ""
             token = ""
 
-    print(variables)
+    #print(variables)
     return tokens
+
+def parser(tokens):
+    for token in tokens:
+        identifier = token[0:8]
+
+        normalizedToken = token
+
+        if identifier == "PRINT_KW":
+            if "STRING" in token:
+                normalizedToken = normalizedToken[0:30] + " CL_QUOT RPAREN SEMICOLON"
+            elif "BOOL" in token:
+                normalizedToken = normalizedToken[0:20] + " RPAREN SEMICOLON"
+            elif "EXPR" in token:
+                normalizedToken = normalizedToken[0:20] + " RPAREN SEMICOLON"
+            elif "FLOAT" in token:
+                normalizedToken = normalizedToken[0:21] + " RPAREN SEMICOLON"
+            elif "INT" in token:
+                normalizedToken = normalizedToken[0:19] + " RPAREN SEMICOLON"
+            
+            if normalizedToken == "PRINT_KW LPAREN BOOL RPAREN SEMICOLON":
+                key_list = list(boole.keys())
+                val_list = list(boole.values())
+                position = val_list.index(token[21:].replace(" RPAREN SEMICOLON", ""))
+                print(key_list[position])
+            elif normalizedToken == "PRINT_KW LPAREN FLOAT RPAREN SEMICOLON":
+                print(token[22:].replace(" RPAREN SEMICOLON", ""))
+            elif normalizedToken == "PRINT_KW LPAREN INT RPAREN SEMICOLON":
+                print(token[20:].replace(" RPAREN SEMICOLON", ""))
+            elif normalizedToken == "PRINT_KW LPAREN OP_QUOT STRING CL_QUOT RPAREN SEMICOLON":
+                print(token[31:].replace("\" CL_QUOT RPAREN SEMICOLON", "") + "\"")
+            elif normalizedToken == "PRINT_KW LPAREN EXPR RPAREN SEMICOLON":
+                print(eval(token[21:].replace(" RPAREN SEMICOLON", "")))
+
 
 if __name__ == "__main__":
     tokens = lexer(open_code(argv[1]))
-    print(tokens)
+    parser(tokens)
