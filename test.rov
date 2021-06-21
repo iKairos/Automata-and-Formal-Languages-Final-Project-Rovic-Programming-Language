@@ -1,6 +1,4 @@
-print(True);
-print(12323);
-print(1.5);
-print("xxx");
-print(1+5);
-print("tang ina mo marc rovic hahahaha gago amputa 1+1 ahah");
+rovic = 2;
+if(rovic == 2):
+    rovic = 3;
+endif;
