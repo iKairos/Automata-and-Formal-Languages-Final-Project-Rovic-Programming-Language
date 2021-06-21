@@ -35,3 +35,69 @@ reset 1/0
 
 f string
 tab / endif/endloop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CONDITION_IF_KW LPAREN VARIABLE:rov OPERATOR:== INT:2 RPAREN COLON
+
+enc = 0
+
+
+cond_closures = [
+    [("if", condition, ["toks", "toks1", "toks2"]), ("elsif", condition, [toks, toks1,toks 2]), ("else", [toks toks toks])],
+    ["PRINT_KW LPAREN OP_QUOT STRING:"toktok" CL_QUOT RPAREN SEMICOLON"]
+]
+
+
+
+
+
+
+[
+    [
+        ('if', False, [
+            'PRINT_KW LPAREN OP_QUOT STRING:"toktok" CL_QUOT RPAREN SEMICOLON', 
+            'VARIABLE:rovrov EQUALS INT:2 SEMICOLON', 
+            'PRINT_KW LPAREN OP_QUOT STRING:"tang ina mo k ahha" CL_QUOT RPAREN SEMICOLON', 
+            'PRINT_KW LPAREN VARIABLE:rovrov RPAREN SEMICOLON', 
+            'CONDITION_ELSIF_KW LPAREN VARIABLE:rov OPERATOR:== INT:3 RPAREN COLON']
+        ), 
+        ('elsif', True, ['PRINT_KW LPAREN OP_QUOT STRING:"nag 3 sia!!!" CL_QUOT RPAREN SEMICOLON'])]]
+
+
+
+
+
+
+
+
+
+[
+('if', True, ['PRINT_KW LPAREN OP_QUOT STRING:"toktok" CL_QUOT RPAREN SEMICOLON', 
+    'VARIABLE:rovrov EQUALS INT:2 SEMICOLON', 
+    'PRINT_KW LPAREN OP_QUOT STRING:"tang ina mo k ahha" CL_QUOT RPAREN SEMICOLON', 
+    'PRINT_KW LPAREN VARIABLE:rovrov RPAREN SEMICOLON', 
+    'CONDITION_ELSIF_KW LPAREN VARIABLE:rov OPERATOR:== INT:3 RPAREN COLON', 'PRINT_KW LPAREN OP_QUOT STRING:"nag 3 sia!!!" CL_QUOT RPAREN SEMICOLON']
+), 
+('elsif', False, [])]
+
+
+
+
+

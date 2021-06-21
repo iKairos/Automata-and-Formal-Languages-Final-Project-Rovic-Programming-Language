@@ -49,6 +49,7 @@ def lexer(code: str):
     operator = ""
     string = ""
     variable = ""
+    variable_2 = ""
 
     condition = 0
     enclosure = 0
@@ -128,21 +129,12 @@ def lexer(code: str):
 
                 tk = ""
 
-            elif tk in boole:
-                #variables[variable] = (tk, "BOOLEAN")
-                token += boole[tk] + " "
-                ifBool = 1         
+            # elif tk == "input":
+            #     token += f"INPUT_KW "
 
-                tk = "" 
-                variable = ""    
-                var_state = 0 
-
-            elif tk == "input":
-                token += f"INPUT_KW "
-
-                tk = ""
-                variable = ""
-                var_state = 0
+            #     tk = ""
+            #     variable = ""
+            #     var_state = 0
 
             elif tk == ";":
                 if expression == 1:
@@ -152,7 +144,12 @@ def lexer(code: str):
                     numeral = ""
                     expression = 0
                 
-                elif expression == 0 and ifBool == 0:
+                elif variable_2 != "":
+                    token += f"VARIABLE:{variable_2} "
+
+                    variable_2 = ""
+                
+                elif expression == 0:
                     #variables[variable] = (numeral, "INT" if "." not in numeral else "FLOAT")
                     token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
 
@@ -166,6 +163,28 @@ def lexer(code: str):
                 variable = ""
                 ifBool = 0
                 var_state = 0
+            
+            else:
+                variable_2 += tk 
+
+                if variable_2 == "input":
+                    token += f"INPUT_KW "
+
+                    tk = ""
+                    variable = ""
+                    var_state = 0
+
+                elif variable_2 in boole:
+                    #variables[variable] = (tk, "BOOLEAN")
+                    token += boole[variable_2] + " "      
+
+                    tk = "" 
+                    variable = ""    
+                    variable_2 = ""
+                    var_state = 0 
+
+                tk = ""
+                
                 
         # LEFT PARENTHESIS
         elif tk == "(":
@@ -339,105 +358,160 @@ def lexer(code: str):
     #print(variables)
     return tokens
 
+def exec_print(normalizedToken, token, line):
+    if "STRING" in token:
+        normalizedToken = normalizedToken[0:30] + " CL_QUOT RPAREN SEMICOLON"
+    elif "BOOL" in token:
+        normalizedToken = normalizedToken[0:20] + " RPAREN SEMICOLON"
+    elif "EXPR" in token:
+        normalizedToken = normalizedToken[0:20] + " RPAREN SEMICOLON"
+    elif "VARIABLE" in token:
+        normalizedToken = normalizedToken[0:24] + " RPAREN SEMICOLON"
+    elif "FLOAT" in token:
+        normalizedToken = normalizedToken[0:21] + " RPAREN SEMICOLON"
+    elif "INT" in token:
+        normalizedToken = normalizedToken[0:19] + " RPAREN SEMICOLON"
+    
+    if normalizedToken == "PRINT_KW LPAREN BOOL RPAREN SEMICOLON":
+        key_list = list(boole.keys())
+        val_list = list(boole.values())
+        position = val_list.index(token[21:].replace(" RPAREN SEMICOLON", ""))
+        print(key_list[position])
+    elif normalizedToken == "PRINT_KW LPAREN FLOAT RPAREN SEMICOLON":
+        print(token[22:].replace(" RPAREN SEMICOLON", ""))
+    elif normalizedToken == "PRINT_KW LPAREN INT RPAREN SEMICOLON":
+        print(token[20:].replace(" RPAREN SEMICOLON", ""))
+    elif normalizedToken == "PRINT_KW LPAREN OP_QUOT STRING CL_QUOT RPAREN SEMICOLON":
+        print(token[32:].replace("\" CL_QUOT RPAREN SEMICOLON", ""))
+    elif normalizedToken == "PRINT_KW LPAREN EXPR RPAREN SEMICOLON":
+        print(eval(token[21:].replace(" RPAREN SEMICOLON", "")))
+    elif normalizedToken == "PRINT_KW LPAREN VARIABLE RPAREN SEMICOLON":
+        variable = token[25:].replace(" RPAREN SEMICOLON", "")
+        try:
+            print(variables[variable])
+        except KeyError:
+            print(f"An error has occurred at line {line}: Variable does not exist.")
+
 def parser(tokens):
     line = 1
     
     cond_closures = []
+    enc = 0
+    who_enc = 0
+
+    in_cond = False
+    add_toks = False
 
     for token in tokens:
-        print(token)
         normalizedToken = token
 
-        identifier = token[0:8]
-        # check if print
-        if identifier == "PRINT_KW":
-            if "STRING" in token:
-                normalizedToken = normalizedToken[0:30] + " CL_QUOT RPAREN SEMICOLON"
-            elif "BOOL" in token:
-                normalizedToken = normalizedToken[0:20] + " RPAREN SEMICOLON"
-            elif "EXPR" in token:
-                normalizedToken = normalizedToken[0:20] + " RPAREN SEMICOLON"
-            elif "VARIABLE" in token:
-                normalizedToken = normalizedToken[0:24] + " RPAREN SEMICOLON"
-            elif "FLOAT" in token:
-                normalizedToken = normalizedToken[0:21] + " RPAREN SEMICOLON"
-            elif "INT" in token:
-                normalizedToken = normalizedToken[0:19] + " RPAREN SEMICOLON"
-            
-            if normalizedToken == "PRINT_KW LPAREN BOOL RPAREN SEMICOLON":
-                key_list = list(boole.keys())
-                val_list = list(boole.values())
-                position = val_list.index(token[21:].replace(" RPAREN SEMICOLON", ""))
-                print(key_list[position])
-            elif normalizedToken == "PRINT_KW LPAREN FLOAT RPAREN SEMICOLON":
-                print(token[22:].replace(" RPAREN SEMICOLON", ""))
-            elif normalizedToken == "PRINT_KW LPAREN INT RPAREN SEMICOLON":
-                print(token[20:].replace(" RPAREN SEMICOLON", ""))
-            elif normalizedToken == "PRINT_KW LPAREN OP_QUOT STRING CL_QUOT RPAREN SEMICOLON":
-                print(token[32:].replace("\" CL_QUOT RPAREN SEMICOLON", ""))
-            elif normalizedToken == "PRINT_KW LPAREN EXPR RPAREN SEMICOLON":
-                print(eval(token[21:].replace(" RPAREN SEMICOLON", "")))
-            elif normalizedToken == "PRINT_KW LPAREN VARIABLE RPAREN SEMICOLON":
-                variable = token[25:].replace(" RPAREN SEMICOLON", "")
-                try:
-                    print(variables[variable][0])
-                except KeyError:
-                    print(f"An error has occurred at line {line}: Variable does not exist.")
+        if in_cond:     
+            identifier = token[0:18]
 
-        identifier = token[0:8]
+            if identifier == "CONDITION_ELSIF_KW":
+                condition = token[:token.index("RPAREN")-1].replace("CONDITION_ELSIF_KW ", "")
+                condition = condition.split(" ")
+                condition = [i.split(":") if len(i.split(":")) > 1 else None for i in condition]
+                condition = list(filter(None, condition))
+                
+                stringified = ""
+                for tok, val in condition:
+                    if tok == "VARIABLE":
+                        stringified += variables[val]
+                    else:
+                        stringified += val
 
-        if identifier == "VARIABLE":
+                who_enc += 1
+                cond_closures[enc].append(("elsif", eval(stringified), []))
             
-            toks = token.replace(" EQUALS", "")
-            toks = toks.replace(" SEMICOLON", "")
-            toks = toks.replace(" OP_QUOT", "")
-            toks = toks.replace(" CL_QUOT", "")
-            toks = toks.split(" ")
-            print(toks)
-            variable = toks[0][9:]
-            
-            data_type = toks[1][0:3]
-            if data_type == "INT":
-                variables[variable] = toks[1][4:]
-            
-            data_type = toks[1][0:5]
-            if data_type == "FLOAT":
-                variables[variable] = toks[1][6:]
-            
-            data_type = toks[1][0:6]
-            if data_type == "STRING":
-                variables[variable] = token[token.index("STRING") + 7:].replace(" CL_QUOT SEMICOLON", "")
-                print(variables[variable])
-            
-            data_type = toks[1][0:4]
-            if data_type == "BOOL":
-                key_list = list(boole.keys())
-                val_list = list(boole.values())
-                position = val_list.index(toks[1])
-                variables[variable] = key_list[position]
-
-        identifier = token[0:15]
-
-        # check if if
-        if identifier == "CONDITION_IF_KW":
-            cond_enclosure = 1
-
-            condition = token[:token.index("RPAREN")-1].replace("CONDITION_IF_KW LPAREN ", "")
-            condition = condition.split(" ")
-            condition = [i.split(":") if len(i.split(":")) > 1 else None for i in condition]
-            condition = list(filter(None, condition))
-            print(condition)
-            stringified = ""
-            for tok, val in condition:
-                if tok == "VARIABLE":
-                    stringified += variables[val][0]
+            if add_toks:
+                if "CONDITION_ELSIF_KW" in token:
+                    pass
                 else:
-                    stringified += val
+                    cond_closures[enc][who_enc][2].append(token)
             
-            print(stringified)
-            print(eval(stringified))
-        
-        line += 1
+            identifier = token[0:17]
+            if identifier == "CONDITION_ELSE_KW":
+                who_enc += 1
+                cond_closures[enc].append(("else", True, []))
+
+            identifier = token[0:9]
+            if identifier == "END_IF_KW":
+                for kw, cond, ts in cond_closures[enc]:
+                    if cond:
+                        parser(ts)
+                        break
+
+                in_cond = False 
+                enc += 1
+                who_enc = 0 
+            
+        else:
+            identifier = token[0:15]
+            
+            # check if if
+            if identifier == "CONDITION_IF_KW":
+                condition = token[:token.index("RPAREN")-1].replace("CONDITION_IF_KW LPAREN ", "")
+                condition = condition.split(" ")
+                condition = [i.split(":") if len(i.split(":")) > 1 else None for i in condition]
+                condition = list(filter(None, condition))
+                stringified = ""
+                for tok, val in condition:
+                    if tok == "VARIABLE":
+                        stringified += variables[val]
+                    else:
+                        stringified += val
+    
+                cond_closures.append([("if", eval(stringified), [])])
+
+                in_cond = True
+                add_toks = True
+
+            identifier = token[0:8]
+
+            # check if print
+            if identifier == "PRINT_KW":
+                exec_print(normalizedToken, token, line)
+
+            identifier = token[0:8]
+
+            if identifier == "VARIABLE":
+                
+                toks = token.replace(" EQUALS", "")
+                toks = toks.replace(" SEMICOLON", "")
+                toks = toks.replace(" OP_QUOT", "")
+                toks = toks.replace(" CL_QUOT", "")
+                toks = toks.split(" ")
+      
+                variable = toks[0][9:]
+
+                data_type = toks[1][0:3]
+                if data_type == "INT":
+                    variables[variable] = toks[1][4:]
+                
+                data_type = toks[1][0:5]
+                if data_type == "FLOAT":
+                    variables[variable] = toks[1][6:]
+                
+                data_type = toks[1][0:6]
+                if data_type == "STRING":
+                    variables[variable] = token[token.index("STRING") + 7:].replace(" CL_QUOT SEMICOLON", "")
+                
+                data_type = toks[1][0:4]
+                if data_type == "BOOL":
+                    key_list = list(boole.keys())
+                    val_list = list(boole.values())
+                    position = val_list.index(toks[1])
+                    variables[variable] = key_list[position]
+                
+                if data_type == "EXPR":
+                    variables[variable] = eval(toks[1][5:])
+                
+                data_type = toks[1][0:8]
+                if data_type == "VARIABLE":
+                    variables[toks[0][9:]] = variables[toks[1][9:]]
+
+            line += 1
 
 if __name__ == "__main__":
     tokens = lexer(open_code(argv[1]))

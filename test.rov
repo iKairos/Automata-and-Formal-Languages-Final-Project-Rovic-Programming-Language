@@ -1,4 +1,13 @@
-rovic = 2;
-if(rovic == 2):
-    rovic = 3;
+rov = 412321312312321;
+if(rov == 2):
+    print("toktok");
+    rovrov = 2;
+    print("tang ina mo k ahha");
+    print(rovrov);
+elsif(rov == 3):
+    print("nag 3 sia!!!");
+elsif(rov == 4):
+    print("gago nag 4 ahah");
+else:
+    print("nag else ahah");
 endif;
