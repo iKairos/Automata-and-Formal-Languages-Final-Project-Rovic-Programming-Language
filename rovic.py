@@ -70,6 +70,7 @@ def lexer(code: str):
 
             elif state == 1:
                 string += " "
+                tk = ""
 
         # NEXT LINE
         elif tk == "\n":
@@ -88,7 +89,7 @@ def lexer(code: str):
             variable = tk.replace("=", "").strip()            
             
             var_state = 1
-            variables[variable] = ""
+            #variables[variable] = ""
             token += f"VARIABLE:{variable} EQUALS "
             
             tk = ""
@@ -101,8 +102,8 @@ def lexer(code: str):
                     token += "OP_QUOT "
                 
                 elif state == 1:
-                    variables[variable] = (string, "STRING")
-                    token += "STRING CL_QUOT "
+                    #variables[variable] = (string, "STRING")
+                    token += f"STRING:{string} CL_QUOT "
 
                     string = ""
                     tk = ""
@@ -128,7 +129,7 @@ def lexer(code: str):
                 tk = ""
 
             elif tk in boole:
-                variables[variable] = (tk, "BOOLEAN")
+                #variables[variable] = (tk, "BOOLEAN")
                 token += boole[tk] + " "
                 ifBool = 1         
 
@@ -145,15 +146,15 @@ def lexer(code: str):
 
             elif tk == ";":
                 if expression == 1:
-                    variables[variable] = (numeral, "EXPR")
-                    token += "EXPR "
+                    #variables[variable] = (numeral, "EXPR")
+                    token += f"EXPR:{numeral} "
 
                     numeral = ""
                     expression = 0
                 
                 elif expression == 0 and ifBool == 0:
-                    variables[variable] = (numeral, "INT" if "." not in numeral else "FLOAT")
-                    token += "INT " if "." not in numeral else "FLOAT "
+                    #variables[variable] = (numeral, "INT" if "." not in numeral else "FLOAT")
+                    token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
 
                     numeral = ""
 
@@ -344,7 +345,7 @@ def parser(tokens):
     cond_closures = []
 
     for token in tokens:
-        #print(token)
+        print(token)
         normalizedToken = token
 
         identifier = token[0:8]
@@ -382,7 +383,39 @@ def parser(tokens):
                     print(variables[variable][0])
                 except KeyError:
                     print(f"An error has occurred at line {line}: Variable does not exist.")
-        
+
+        identifier = token[0:8]
+
+        if identifier == "VARIABLE":
+            
+            toks = token.replace(" EQUALS", "")
+            toks = toks.replace(" SEMICOLON", "")
+            toks = toks.replace(" OP_QUOT", "")
+            toks = toks.replace(" CL_QUOT", "")
+            toks = toks.split(" ")
+            print(toks)
+            variable = toks[0][9:]
+            
+            data_type = toks[1][0:3]
+            if data_type == "INT":
+                variables[variable] = toks[1][4:]
+            
+            data_type = toks[1][0:5]
+            if data_type == "FLOAT":
+                variables[variable] = toks[1][6:]
+            
+            data_type = toks[1][0:6]
+            if data_type == "STRING":
+                variables[variable] = token[token.index("STRING") + 7:].replace(" CL_QUOT SEMICOLON", "")
+                print(variables[variable])
+            
+            data_type = toks[1][0:4]
+            if data_type == "BOOL":
+                key_list = list(boole.keys())
+                val_list = list(boole.values())
+                position = val_list.index(toks[1])
+                variables[variable] = key_list[position]
+
         identifier = token[0:15]
 
         # check if if
