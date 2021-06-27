@@ -262,7 +262,12 @@ def lexer(code: str):
                         ifBool = 0
 
                 elif loop == 1:
-                    token += f"VARIABLE:{variable} OPERATOR:{loop_operator} INT:{numeral} "
+                    token += f"VARIABLE:{variable} OPERATOR:{loop_operator} "
+                    if numeral != "":
+                        token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
+
+                    elif variable_2 != "":
+                        token += f"VARIABLE2:{variable_2} "
 
                     loop_operator = ""
                     numeral = ""
@@ -363,9 +368,11 @@ def lexer(code: str):
                     loop_operator += tk
 
                 elif loop_operator == "i":
+                    print("kairos the great jakolero")
                     loop_operator += tk
 
-                if loop_operator == "in":                    
+                if loop_operator == "in":  
+                    print("kairitous")                  
                     loop = 1
                     sec_var = 1
                     variable = variable.replace("in", "")
