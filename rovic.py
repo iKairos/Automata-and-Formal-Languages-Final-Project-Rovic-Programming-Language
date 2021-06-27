@@ -371,7 +371,7 @@ def lexer(code: str):
             # VARIABLE READER
             else:                                    
                 fill_paren = 1    
-                print(tk)
+
                 if sec_var == 0:            
                     variable += tk                
 
@@ -399,6 +399,17 @@ def lexer(code: str):
                     ifBool = 1
                     boolean = boole[variable[-5:]]
                     variable = variable.replace("False", "")
+
+                if "True" in variable_2:                      
+                    ifBool = 1
+
+                    boolean = boole[variable_2[-4:]]
+                    variable_2 = variable_2.replace("True", "")                               
+                                    
+                elif "False" in variable_2:
+                    ifBool = 1
+                    boolean = boole[variable_2[-5:]]
+                    variable_2 = variable_2.replace("False", "")
                 
                 tk = ""
 
@@ -418,7 +429,6 @@ def lexer(code: str):
             tk = ""
             token = ""
 
-    print(tokens)
     return tokens
 
 def exec_print(normalizedToken, token, line):
@@ -542,11 +552,12 @@ def parser(tokens):
             if identifier == "CONDITION_IF_KW":
                 condition = token[:token.index("RPAREN")-1].replace("CONDITION_IF_KW LPAREN ", "")
                 condition = condition.split(" ")
+                print(condition)
                 condition = [i.split(":") if len(i.split(":")) > 1 else None for i in condition]
                 condition = list(filter(None, condition))
                 stringified = ""
-                
                 for tok, val in condition:
+
                     if tok == "VARIABLE" or tok == "VARIABLE2":
                         if type(variables[val]) is str:
                             stringified += f"\"{variables[val]}\""
@@ -560,7 +571,7 @@ def parser(tokens):
                         stringified = stringified.replace("\"", "")
                     else:
                         stringified += val
-            
+
                 cond_closures.append([("if", eval(stringified), [])])
 
                 in_cond = True
@@ -597,7 +608,7 @@ def parser(tokens):
                 toks = toks.replace(" OP_QUOT", "")
                 toks = toks.replace(" CL_QUOT", "")
                 toks = toks.split(" ")
-                
+
                 variable = toks[0][9:]
 
                 data_type = toks[1][0:8]
@@ -606,8 +617,17 @@ def parser(tokens):
                     
                     variables[variable] = input(prompt.replace("\"",""))
 
+                data_type = toks[1][0:10]
+                if data_type == "INT_TYP_KW":
+                    tp = [i.split(":") for i in toks]
+                    if tp[2][0] == "VARIABLE":
+                        val = tp[2][1].replace("(", "").replace(")", "")
+                        variables[variable] = int(variables[val].replace(" SEMICOLON", ""))
+
+
                 data_type = toks[1][0:3]
-                if data_type == "INT":
+
+                if data_type == "INT" and toks[1] != "INT_TYP_KW":
                     variables[variable] = int(toks[1][4:])
                 
                 data_type = toks[1][0:5]
@@ -616,7 +636,7 @@ def parser(tokens):
                 
                 data_type = toks[1][0:6]
                 if data_type == "STRING":
-                    variables[variable] = token[token.index("STRING") + 7:].replace(" CL_QUOT SEMICOLON", "")
+                    variables[variable] = token[token.index("STRING") + 7:].replace(" CL_QUOT SEMICOLON", "").replace(" SEMICOLON", "")
                 
                 data_type = toks[1][0:4]
                 if data_type == "BOOL":

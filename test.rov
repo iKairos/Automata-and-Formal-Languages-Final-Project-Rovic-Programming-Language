@@ -1,3 +1,8 @@
-rov = int(rovrov);
-int("3");
-kairos = int("3");
+
+
+
+baja = input("Enter your name: ");
+
+if(baja == "Marc Rovic Baja"):
+    print("Putang ina mo baj ahaha");
+endif;
