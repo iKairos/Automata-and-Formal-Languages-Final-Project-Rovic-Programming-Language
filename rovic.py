@@ -25,7 +25,8 @@ keywords = {
     'else': 'CONDITION_ELSE_KW ',
     'for': 'FOR_LOOP_KW ',
     'while': 'WHILE_LOOP_KW ',
-    'endif': 'END_IF_KW '
+    'endif': 'END_IF_KW ',
+    'int': 'TYP_INT'
 }
 loop = [
 
@@ -59,11 +60,11 @@ def lexer(code: str):
     loop = 0
     operation = 0
     state = 0
+    sec_var = 0
     var_state = 0
 
     for c in code:
         tk += c                
-
         # WHITE SPACE
         if tk == " ":
             if state == 0:
@@ -97,13 +98,18 @@ def lexer(code: str):
 
         # VARIABLE VALUE
         elif var_state == 1:        
-            #print(tk)        
-            if tk == "\"":
+            if tk == "\"":                
                 if state == 0:
                     state = 1
                     token += "OP_QUOT "
                 
-                elif state == 1:
+                elif state == 1 and array_state == 1:                    
+                    token += f"STRING:{string} CL_QUOT "
+
+                    tk = ""
+                    state = 0
+
+                elif state == 1 and array_state == 0:
                     #variables[variable] = (string, "STRING")
                     token += f"STRING:{string} CL_QUOT "
 
@@ -121,17 +127,22 @@ def lexer(code: str):
                 tk = ""
 
             elif tk == "]":
+                if numeral != "":
+                    token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
                 token += "] "
                 tk = ""
 
             elif tk == "," and array_state == 1:
                 if numeral != "":
                     token += f"INT:{numeral}, " if "." not in numeral else f"FLOAT:{numeral}, "
+                # elif string != "":
+                #     token += f"STRING:{string} CL_QUOT, "
                 else:
                     token += ", "
             
                 tk = ""
                 numeral = ""
+                string = ""
             elif tk in numerals:
                 numeral += tk
 
@@ -230,13 +241,18 @@ def lexer(code: str):
                         string = ""      
 
                     elif ifBool == 1:                                          
-                        token += f"BOOL:{boolean} "           
+                        token += f"BOOL:{boolean} "     
+
+                    elif variable_2 != ""      :
+                        token += f"VARIABLE2:{variable_2} "
                     
                     variable = ""
+                    variable_2 = ""
                     operator = ""
                     condition = 0
                     ifBool = 0
-                    operation = 0   
+                    operation = 0 
+                    sec_var = 0  
 
                 elif ifBool == 1:                                           
                         token += f"BOOL:{boolean} " 
@@ -252,7 +268,7 @@ def lexer(code: str):
                     variable = ""
                     loop = 0
                 
-                elif variable != "":
+                elif variable != "":                                        
                     token += f"VARIABLE:{variable} "
 
                     variable = ""
@@ -329,13 +345,18 @@ def lexer(code: str):
                 fill_paren = 1
                 operation = 1
                 operator += tk
+                sec_var = 1
 
                 tk = ""
                 
             # VARIABLE READER
             else:                                    
-                fill_paren = 1                
-                variable += tk
+                fill_paren = 1    
+                if sec_var == 0:            
+                    variable += tk                
+
+                elif sec_var == 1:
+                    variable_2 += tk
 
                 if tk == "i":
                     loop_operator += tk
@@ -414,8 +435,7 @@ def exec_print(normalizedToken, token, line):
             print(f"An error has occurred at line {line}: Variable does not exist.")
 
 def parser(tokens):
-    line = 1
-    
+    line = 1    
     cond_closures = []
     enc = 0
     who_enc = 0
@@ -424,8 +444,8 @@ def parser(tokens):
     add_toks = False
 
     for token in tokens:
-        normalizedToken = token
         print(token)
+        normalizedToken = token        
         if in_cond:
 
             identifier = token[0:18]
