@@ -101,17 +101,17 @@ def lexer(code: str):
             if tk == "\"":                
                 if state == 0:
                     state = 1
-                    token += "OP_QUOT "
+                    #token += "OP_QUOT"
                 
                 elif state == 1 and array_state == 1:                    
-                    token += f"STRING:{string} CL_QUOT "
+                    token += f"STRING:{string}"
 
                     tk = ""
                     state = 0
 
                 elif state == 1 and array_state == 0:
                     #variables[variable] = (string, "STRING")
-                    token += f"STRING:{string} CL_QUOT "
+                    token += f"STRING:{string}"
 
                     string = ""
                     tk = ""
@@ -123,22 +123,23 @@ def lexer(code: str):
             elif tk == "[":
                 array_state = 1
 
-                token += "ARRAY:[ "
+                token += "ARRAY:["
                 tk = ""
 
             elif tk == "]":
                 if numeral != "":
-                    token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
+                    token += f"INT:{numeral}" if "." not in numeral else f"FLOAT:{numeral}"
                 token += "] "
                 tk = ""
+                numeral = ""
 
             elif tk == "," and array_state == 1:
                 if numeral != "":
-                    token += f"INT:{numeral}, " if "." not in numeral else f"FLOAT:{numeral}, "
+                    token += f"INT:{numeral}," if "." not in numeral else f"FLOAT:{numeral},"
                 # elif string != "":
                 #     token += f"STRING:{string} CL_QUOT, "
                 else:
-                    token += ", "
+                    token += ","
             
                 tk = ""
                 numeral = ""
@@ -243,7 +244,7 @@ def lexer(code: str):
                     elif ifBool == 1:                                          
                         token += f"BOOL:{boolean} "     
 
-                    elif variable_2 != ""      :
+                    elif variable_2 != "":
                         token += f"VARIABLE2:{variable_2} "
                     
                     variable = ""
@@ -444,7 +445,7 @@ def parser(tokens):
     add_toks = False
 
     for token in tokens:
-        print(token)
+        #print(token)
         normalizedToken = token        
         if in_cond:
 
@@ -501,13 +502,13 @@ def parser(tokens):
                 condition = [i.split(":") if len(i.split(":")) > 1 else None for i in condition]
                 condition = list(filter(None, condition))
                 stringified = ""
+
                 for tok, val in condition:
-                    if tok == "VARIABLE":
+                    if tok == "VARIABLE" or tok == "VARIABLE2":
                         if type(variables[val]) is str:
                             stringified += f"\"{variables[val]}\""
                         else:
                             stringified += f"{variables[val]}"
-                            
                     elif tok == "BOOL":
                         key_list = list(boole.keys())
                         val_list = list(boole.values())
@@ -529,7 +530,7 @@ def parser(tokens):
                 exec_print(normalizedToken, token, line)
 
             identifier = token[0:8]
-
+            
             if identifier == "VARIABLE":
                 
                 toks = token.replace(" EQUALS", "")
@@ -537,7 +538,7 @@ def parser(tokens):
                 toks = toks.replace(" OP_QUOT", "")
                 toks = toks.replace(" CL_QUOT", "")
                 toks = toks.split(" ")
-      
+                
                 variable = toks[0][9:]
 
                 data_type = toks[1][0:8]
@@ -570,6 +571,28 @@ def parser(tokens):
                 data_type = toks[1][0:8]
                 if data_type == "VARIABLE":
                     variables[toks[0][9:]] = variables[toks[1][9:]]
+
+                data_type = toks[1][0:5]
+                if data_type == "ARRAY":
+                    temp = toks[1][6:]
+                    temp = temp[1:]
+                    temp = temp[:len(temp)-1]
+                    temp = temp.split(",")
+
+                    arr = []
+                    for i in temp:
+                        tp = i.split(':')
+                        typ = tp[0]
+                        va = tp[1]
+
+                        if typ == "INT":
+                            arr.append(int(va))
+                        elif typ == "FLOAT":
+                            arr.append(float(va))
+                        elif typ == "STRING":
+                            arr.append(va)
+                    
+                    variables[variable] = arr
 
             line += 1
 
