@@ -6,5 +6,5 @@ if(num == rov):
     print("gumawa kana jc ng parser");
 endif;
 
-for i in jay:
+for(marc in jay):
 

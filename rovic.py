@@ -26,7 +26,7 @@ keywords = {
     'for': 'FOR_LOOP_KW ',
     'while': 'WHILE_LOOP_KW ',
     'endif': 'END_IF_KW ',
-    'int': 'TYP_INT'
+    'endfor': "END_FOR_KW"
 }
 loop = [
 
@@ -367,6 +367,7 @@ def lexer(code: str):
 
                 if loop_operator == "in":                    
                     loop = 1
+                    sec_var = 1
                     variable = variable.replace("in", "")
 
                 if "True" in variable:                      
@@ -445,7 +446,7 @@ def parser(tokens):
     add_toks = False
 
     for token in tokens:
-        #print(token)
+        print(token)
         normalizedToken = token        
         if in_cond:
 
