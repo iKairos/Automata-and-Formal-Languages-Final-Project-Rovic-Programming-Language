@@ -26,7 +26,7 @@ keywords = {
     'for': 'FOR_LOOP_KW ',
     'while': 'WHILE_LOOP_KW ',
     'endif': 'END_IF_KW ',
-    'endfor': "END_FOR_KW"
+    'endfor': "END_FOR_KW "
 }
 loop = [
 
@@ -204,6 +204,7 @@ def lexer(code: str):
                     variables[variable] = None
                     tk = ""
                     variable = ""
+                    variable_2 = ""
                     var_state = 0
 
                 elif variable_2 in boole:
@@ -263,6 +264,7 @@ def lexer(code: str):
 
                 elif loop == 1:
                     token += f"VARIABLE:{variable} OPERATOR:{loop_operator} "
+                    variables[variable] = None
                     if numeral != "":
                         token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
 
@@ -272,6 +274,8 @@ def lexer(code: str):
                     loop_operator = ""
                     numeral = ""
                     variable = ""
+                    variable_2 = ""
+                    sec_var = 0
                     loop = 0
                 
                 elif variable != "":                                        
@@ -358,6 +362,7 @@ def lexer(code: str):
             # VARIABLE READER
             else:                                    
                 fill_paren = 1    
+                print(variable)
                 if sec_var == 0:            
                     variable += tk                
 
@@ -368,11 +373,9 @@ def lexer(code: str):
                     loop_operator += tk
 
                 elif loop_operator == "i":
-                    print("kairos the great jakolero")
                     loop_operator += tk
 
-                if loop_operator == "in":  
-                    print("kairitous")                  
+                if loop_operator == "in":                  
                     loop = 1
                     sec_var = 1
                     variable = variable.replace("in", "")
@@ -406,7 +409,7 @@ def lexer(code: str):
             tk = ""
             token = ""
 
-    #print(variables)
+    print(tokens)
     return tokens
 
 def exec_print(normalizedToken, token, line):
@@ -446,19 +449,24 @@ def exec_print(normalizedToken, token, line):
 def parser(tokens):
     line = 1    
     cond_closures = []
+    loop_closures = []
     enc = 0
     who_enc = 0
+    loop = 0
+    loop_var = ""
+    loop_array = ""
+    loop_where = 0
 
     in_cond = False
     add_toks = False
+    in_loop = False
 
     for token in tokens:
-        print(token)
-        normalizedToken = token        
+        normalizedToken = token 
+    
         if in_cond:
 
             identifier = token[0:18]
-
             if identifier == "CONDITION_ELSIF_KW":
                 condition = token[:token.index("RPAREN")-1].replace("CONDITION_ELSIF_KW ", "")
                 condition = condition.split(" ")
@@ -499,7 +507,25 @@ def parser(tokens):
                 in_cond = False 
                 enc += 1
                 who_enc = 0 
+        elif in_loop:
+            identifier = token[0:10]
             
+            if identifier == "END_FOR_KW":
+                for i in variables[loop_array]:
+                    variables[loop_var] = i 
+
+                    for j in loop_closures:
+                        parser(j)
+
+                loop += 1
+                loop_var = ""
+                loop_array = ""
+                loop_closures = []
+                in_loop = False
+
+            else:
+                loop_closures[loop].append(token)
+
         else:
             identifier = token[0:15]
 
@@ -510,7 +536,7 @@ def parser(tokens):
                 condition = [i.split(":") if len(i.split(":")) > 1 else None for i in condition]
                 condition = list(filter(None, condition))
                 stringified = ""
-
+                
                 for tok, val in condition:
                     if tok == "VARIABLE" or tok == "VARIABLE2":
                         if type(variables[val]) is str:
@@ -531,10 +557,26 @@ def parser(tokens):
                 in_cond = True
                 add_toks = True
             
+            identifier = token[0:11]
+            if identifier == "FOR_LOOP_KW":
+                tx = token.replace("FOR_LOOP_KW LPAREN ", "")
+                tx = tx.replace(" RPAREN COLON", "")
+                tx = tx.split(" ")
+                tx = [i.split(":") for i in tx]
+                
+                variables[tx[0][1]] = None 
+                loop_var = tx[0][1]
+                loop_array = tx[2][1]
+                
+                loop_closures.append([])
+
+                in_loop = True
+
             identifier = token[0:8]
 
             # check if print
             if identifier == "PRINT_KW":
+
                 exec_print(normalizedToken, token, line)
 
             identifier = token[0:8]
@@ -552,6 +594,7 @@ def parser(tokens):
                 data_type = toks[1][0:8]
                 if data_type == "INPUT_KW":
                     prompt = token[token.index("STRING") + 7:].replace(" CL_QUOT RPAREN SEMICOLON", "")
+                    
                     variables[variable] = input(prompt.replace("\"",""))
 
                 data_type = toks[1][0:3]

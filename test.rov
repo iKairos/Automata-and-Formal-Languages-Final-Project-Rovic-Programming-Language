@@ -1,4 +1,15 @@
+
+jay = [1, 2.2, 3, 4];
+
+i = input("rovrov: ");
+print(i);
+if(i == 1):
+    print("x");
+endif;
+
 for(marc in jay):
-    print("tang ina mo kairos");
+    x = input("rov: ");
+    print(marc);
+    print(x);
 endfor;
 
