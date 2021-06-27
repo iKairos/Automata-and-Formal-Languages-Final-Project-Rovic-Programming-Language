@@ -38,7 +38,6 @@ variables = {
 }
 
 def lexer(code: str):
-    
     tokens = []
     token = ""
     tk = ""
@@ -51,6 +50,7 @@ def lexer(code: str):
     variable = ""
     variable_2 = ""
 
+    array_state = 0
     condition = 0
     enclosure = 0
     expression = 0
@@ -79,7 +79,7 @@ def lexer(code: str):
 
         # KEYWORDS
         elif tk in keywords:     
-            if tk == "if":
+            if tk == "if" or tk == "elsif":
                 condition = 1
             token += keywords[tk]
 
@@ -96,7 +96,8 @@ def lexer(code: str):
             tk = ""
 
         # VARIABLE VALUE
-        elif var_state == 1:                
+        elif var_state == 1:        
+            #print(tk)        
             if tk == "\"":
                 if state == 0:
                     state = 1
@@ -113,6 +114,24 @@ def lexer(code: str):
                     state = 0
                     var_state = 0
             
+            elif tk == "[":
+                array_state = 1
+
+                token += "ARRAY:[ "
+                tk = ""
+
+            elif tk == "]":
+                token += "] "
+                tk = ""
+
+            elif tk == "," and array_state == 1:
+                if numeral != "":
+                    token += f"INT:{numeral}, " if "." not in numeral else f"FLOAT:{numeral}, "
+                else:
+                    token += ", "
+            
+                tk = ""
+                numeral = ""
             elif tk in numerals:
                 numeral += tk
 
@@ -137,19 +156,19 @@ def lexer(code: str):
             #     var_state = 0
 
             elif tk == ";":
-                if expression == 1:
+                if expression == 1 and array_state == 0:
                     #variables[variable] = (numeral, "EXPR")
                     token += f"EXPR:{numeral} "
 
                     numeral = ""
                     expression = 0
                 
-                elif variable_2 != "":
+                elif variable_2 != "" and array_state == 0:
                     token += f"VARIABLE:{variable_2} "
 
                     variable_2 = ""
                 
-                elif expression == 0:
+                elif expression == 0 and array_state == 0:
                     #variables[variable] = (numeral, "INT" if "." not in numeral else "FLOAT")
                     token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
 
@@ -161,6 +180,7 @@ def lexer(code: str):
                 tk = ""
                 token = ""
                 variable = ""
+                array_state = 0
                 ifBool = 0
                 var_state = 0
             
@@ -169,7 +189,7 @@ def lexer(code: str):
 
                 if variable_2 == "input":
                     token += f"INPUT_KW "
-
+                    variables[variable] = None
                     tk = ""
                     variable = ""
                     var_state = 0
@@ -181,7 +201,7 @@ def lexer(code: str):
                     tk = "" 
                     variable = ""    
                     variable_2 = ""
-                    var_state = 0 
+                    var_state = 0
 
                 tk = ""
                 
@@ -215,6 +235,7 @@ def lexer(code: str):
                     variable = ""
                     operator = ""
                     condition = 0
+                    ifBool = 0
                     operation = 0   
 
                 elif ifBool == 1:                                           
@@ -230,6 +251,11 @@ def lexer(code: str):
                     numeral = ""
                     variable = ""
                     loop = 0
+                
+                elif variable != "":
+                    token += f"VARIABLE:{variable} "
+
+                    variable = ""
 
                 elif expression == 1:                
                     token += f"EXPR:{numeral} "
@@ -241,11 +267,6 @@ def lexer(code: str):
                     token += f"INT:{numeral} " if "." not in numeral else f"FLOAT:{numeral} "
 
                     numeral = ""
-
-                elif variable != "":
-                    token += f"VARIABLE:{variable} "
-
-                    variable = ""
 
             token += "RPAREN "
             enclosure = 0
@@ -329,12 +350,12 @@ def lexer(code: str):
                 if "True" in variable:                      
                     ifBool = 1
 
-                    boolean = boole[variable.replace("var", "")]
-                    variable = variable.replace("True", "")                                   
+                    boolean = boole[variable[-4:]]
+                    variable = variable.replace("True", "")                               
                                     
                 elif "False" in variable:
                     ifBool = 1
-                    boolean = boole[variable.replace("var", "")]
+                    boolean = boole[variable[-5:]]
                     variable = variable.replace("False", "")
                 
                 tk = ""
@@ -404,8 +425,9 @@ def parser(tokens):
 
     for token in tokens:
         normalizedToken = token
+        print(token)
+        if in_cond:
 
-        if in_cond:     
             identifier = token[0:18]
 
             if identifier == "CONDITION_ELSIF_KW":
@@ -417,10 +439,13 @@ def parser(tokens):
                 stringified = ""
                 for tok, val in condition:
                     if tok == "VARIABLE":
-                        stringified += variables[val]
+                        if type(variables[val]) is str:
+                            stringified += f"\"{variables[val]}\""
+                        else:
+                            stringified += f"{variables[val]}"
                     else:
                         stringified += val
-
+                
                 who_enc += 1
                 cond_closures[enc].append(("elsif", eval(stringified), []))
             
@@ -448,7 +473,7 @@ def parser(tokens):
             
         else:
             identifier = token[0:15]
-            
+
             # check if if
             if identifier == "CONDITION_IF_KW":
                 condition = token[:token.index("RPAREN")-1].replace("CONDITION_IF_KW LPAREN ", "")
@@ -458,15 +483,25 @@ def parser(tokens):
                 stringified = ""
                 for tok, val in condition:
                     if tok == "VARIABLE":
-                        stringified += variables[val]
+                        if type(variables[val]) is str:
+                            stringified += f"\"{variables[val]}\""
+                        else:
+                            stringified += f"{variables[val]}"
+                            
+                    elif tok == "BOOL":
+                        key_list = list(boole.keys())
+                        val_list = list(boole.values())
+                        position = val_list.index(val)
+                        stringified += key_list[position]
+                        stringified = stringified.replace("\"", "")
                     else:
                         stringified += val
-    
+            
                 cond_closures.append([("if", eval(stringified), [])])
 
                 in_cond = True
                 add_toks = True
-
+            
             identifier = token[0:8]
 
             # check if print
@@ -485,13 +520,18 @@ def parser(tokens):
       
                 variable = toks[0][9:]
 
+                data_type = toks[1][0:8]
+                if data_type == "INPUT_KW":
+                    prompt = token[token.index("STRING") + 7:].replace(" CL_QUOT RPAREN SEMICOLON", "")
+                    variables[variable] = input(prompt.replace("\"",""))
+
                 data_type = toks[1][0:3]
                 if data_type == "INT":
-                    variables[variable] = toks[1][4:]
+                    variables[variable] = int(toks[1][4:])
                 
                 data_type = toks[1][0:5]
                 if data_type == "FLOAT":
-                    variables[variable] = toks[1][6:]
+                    variables[variable] = float(toks[1][6:])
                 
                 data_type = toks[1][0:6]
                 if data_type == "STRING":
