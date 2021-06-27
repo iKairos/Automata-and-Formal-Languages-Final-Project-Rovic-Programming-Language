@@ -1,15 +1,3 @@
-
-jay = [1, 2.2, 3, 4];
-
-i = input("rovrov: ");
-print(i);
-if(i == 1):
-    print("x");
-endif;
-
-for(marc in jay):
-    x = input("rov: ");
-    print(marc);
-    print(x);
-endfor;
-
+rov = int(rovrov);
+int("3");
+kairos = int("3");

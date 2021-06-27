@@ -26,7 +26,8 @@ keywords = {
     'for': 'FOR_LOOP_KW ',
     'while': 'WHILE_LOOP_KW ',
     'endif': 'END_IF_KW ',
-    'endfor': "END_FOR_KW "
+    'endfor': "END_FOR_KW ",
+    'int': 'INT_TYP_KW '
 }
 loop = [
 
@@ -58,6 +59,7 @@ def lexer(code: str):
     fill_paren = 0
     ifBool = 0
     loop = 0
+    loop_state = 0
     operation = 0
     state = 0
     sec_var = 0
@@ -82,6 +84,8 @@ def lexer(code: str):
         elif tk in keywords:     
             if tk == "if" or tk == "elsif":
                 condition = 1
+            if tk == "for":
+                loop_state = 1
             token += keywords[tk]
 
             tk = ""
@@ -101,7 +105,7 @@ def lexer(code: str):
             if tk == "\"":                
                 if state == 0:
                     state = 1
-                    #token += "OP_QUOT"
+                    # token += "OP_QUOT "
                 
                 elif state == 1 and array_state == 1:                    
                     token += f"STRING:{string}"
@@ -111,7 +115,7 @@ def lexer(code: str):
 
                 elif state == 1 and array_state == 0:
                     #variables[variable] = (string, "STRING")
-                    token += f"STRING:{string}"
+                    token += f"STRING:{string} "
 
                     string = ""
                     tk = ""
@@ -216,6 +220,10 @@ def lexer(code: str):
                     variable_2 = ""
                     var_state = 0
 
+                elif variable_2 in keywords:
+                    token += keywords[variable_2]
+                    variable_2 = ""
+
                 tk = ""
                 
                 
@@ -282,6 +290,7 @@ def lexer(code: str):
                     token += f"VARIABLE:{variable} "
 
                     variable = ""
+                    variable_2 = ""
 
                 elif expression == 1:                
                     token += f"EXPR:{numeral} "
@@ -362,17 +371,17 @@ def lexer(code: str):
             # VARIABLE READER
             else:                                    
                 fill_paren = 1    
-                print(variable)
+                print(tk)
                 if sec_var == 0:            
                     variable += tk                
 
                 elif sec_var == 1:
                     variable_2 += tk
 
-                if tk == "i":
+                if tk == "i" and loop_state == 1:
                     loop_operator += tk
 
-                elif loop_operator == "i":
+                elif tk == "n" and loop_state == 1:
                     loop_operator += tk
 
                 if loop_operator == "in":                  
